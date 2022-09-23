@@ -1,5 +1,3 @@
-# def multiplication_int(a: int, b: int) -> int:
-#     return a * b
 import yadisk
 import requests
 
@@ -17,172 +15,179 @@ directories = {
     '3': []
 }
 
-def name_people(people):
-    for i in documents:
-        if i.get("number") == people:
-            resault_name = i.get("name")
-            return f'Имя человека, которому принадлежит документ {people}: {resault_name}'
 
-def name_shelf(shelf):
-    for key, value in directories.items():
-        for i in value:
-            if i == shelf:  # сравниваем значение с введенным значением shelf которое передаем в функцию name_shelf(name) name это shelf
-                return f'Номер полки, на которой находится документ {i}: {key}'
-    else:
-        return f'В базе данных нет такого документа'
-        # return name_shelf.__name__
+def check_document_existance(user_doc_number):
+    doc_founded = False
+    for current_document in documents:
+        doc_number = current_document['number']
+        if doc_number == user_doc_number:
+            doc_founded = True
+            break
+    return doc_founded
 
-def name_list(documents):
-    count = 0
-    name_data = ''
-    for value in documents:
-        dict_values = list(value.values())
-        count += 1
-        name_data += f'Данные сотрудника № {count}: {dict_values}\n'
-    return name_data
+def get_doc_owner_name(user_doc_number):
+    doc_exist = check_document_existance(user_doc_number)
+    if doc_exist:
+        for current_document in documents:
+            doc_number = current_document['number']
+            if doc_number == user_doc_number:
+                return current_document['name']
 
-def name_add(number, type, name, num_directories):
-    key_dict = directories.keys()
-    count = 0
-    for i in key_dict:
-        if num_directories != i:
-            count += 1
-    if count == len(key_dict):
-        return f"Нет такой полки!"
-    add = {
-        "type": type,
-        "number": number,
-        "name": name
+def get_all_doc_owners_names(documents):
+    users_list = []
+    for current_document in documents:
+        try:
+            doc_owner_name = current_document['name']
+            users_list.append(doc_owner_name)
+        except KeyError:
+            pass
+    return set(users_list)
+
+def remove_doc_from_shelf(doc_number):
+    for directory_number, directory_docs_list in directories.items():
+        if doc_number in directory_docs_list:
+            directory_docs_list.remove(doc_number)
+            break
+
+def add_new_shelf(shelf_number=''):
+
+    if shelf_number not in directories.keys():
+        directories[shelf_number] = []
+        return shelf_number, True
+    return shelf_number, False
+
+def append_doc_to_shelf(doc_number, shelf_number):
+    add_new_shelf(shelf_number)
+    directories[shelf_number].append(doc_number)
+
+def get_doc_shelf( user_doc_number):
+    doc_exist = check_document_existance(user_doc_number)
+    if doc_exist:
+        for directory_number, directory_docs_list in directories.items():
+            if user_doc_number in directory_docs_list:
+                return directory_number
+
+def move_doc_to_shelf(user_doc_number, user_shelf_number):
+    remove_doc_from_shelf(user_doc_number)
+    append_doc_to_shelf(user_doc_number, user_shelf_number)
+    doc_to_shelf = 'Документ номер "{}" был перемещен на полку номер "{}"'.format(user_doc_number, user_shelf_number)
+    return doc_to_shelf
+
+def show_all_docs_info(documents):
+      list_docs_info = []
+      for current_document in documents:
+        list_docs_info += f"{current_document['type']} \"{current_document['number']}\" \"{current_document['name']}\"\n"
+      str_docs_info = ''.join(list_docs_info)
+      return str_docs_info
+
+def add_new_doc(new_doc_number, new_doc_type, new_doc_owner_name, new_doc_shelf_number):
+    new_doc = {
+        "type": new_doc_type,
+        "number": new_doc_number,
+        "name": new_doc_owner_name
     }
-    directories.setdefault(num_directories, []).append(number)
-    documents.append(add)
-    return f'directories = {directories}\ndocuments = {documents}'
+    documents.append(new_doc)
+    append_doc_to_shelf(new_doc_number, new_doc_shelf_number)
+    return new_doc_shelf_number
 
-def name_delete(number_del):
-    count = 0
-    for i in documents:
-        if number_del == i.get("number"):
-            count += 1
-            i.clear()
-            for keys, values in directories.items():
-                for i in values:
-                    if i == number_del:
-                        values.remove(number_del)
-            return f'directories = {directories}\ndocuments = {documents}'
-    if count == 0:
-        return f"Вы вводите несуществующий документ!"
-
-def name_movie(number_movie, number_rack):
-    count = 0
-    count2 = 0
-    for keys, values in directories.items():
-        for i in values:
-            if i == number_movie:
-                count += 1
-        for i in keys:
-            if i == number_rack:
-                count2 += 1
-    if count == 0:
-        return f"Нет такого документа!"
-    if count2 == 0:
-        return f"Нет такой полки!"
-    for keys, values in directories.items():
-        for i in values:
-            if i == number_movie:
-                values_copy = values
-                values_copy.remove(number_movie)
-                directories.setdefault(number_rack, []).append(number_movie)
-    return f'directories = {directories}'
-
-def name_add_self(number_add_self):
-    for keys in directories:
-        if keys == number_add_self:
-            return f"Данная полка уже существует!"
-    else:
-        directories.setdefault(number_add_self, [])
-        return f'directories = {directories}'
+def delete_doc(user_doc_number):
+    doc_exist = check_document_existance(user_doc_number)
+    if doc_exist:
+        for current_document in documents:
+            doc_number = current_document['number']
+            if doc_number == user_doc_number:
+                documents.remove(current_document)
+                remove_doc_from_shelf(doc_number)
+                return doc_number, True
 
 
-# # Press the green button in the gutter to run the script.
-# if __name__ == '__main__':
-#     command = input("Введите команду: ")
-#     if command == "p":
-#         people = input("Введите номер документа: ")
-#         print(name_people(people))  # вызываем фукцию name_man со значением введенной переменной
-#     elif command == "s":
-#         shelf = input("Введите номер документа: ")
-#         print(name_shelf(shelf))  # вызываем фукцию name_shelf со значением введенной переменной
-#     elif command == "l":
-#         print(name_list(documents))
-#     elif command == "a":
-#         number = input("Введите номер документа: ")
-#         type = input("Введите тип документа: ")
-#         name = input("Введите имя: ")
-#         num_directories = input("Введите номер полки: ")
-#         print(name_add(number, type, name, num_directories))
-#     elif command == "d":
-#         number_del = input("Введите номер удаляемого документа: ")
-#         print(name_delete(number_del))
-#     elif command == "m":
-#         number_movie = input("Введите номер документа: ")
-#         number_rack = input("Введите номер полки для перемещения документа: ")
-#         print(name_movie(number_movie, number_rack))
-#     elif command == "as":
-#         number_add_self = input("Введите номер полки: ")
-#         print(name_add_self(number_add_self))
+def secretary_program_start():
+    """
+    ap - (all people) - команда, которая выводит список всех владельцев документов
+    p – (people) – команда, которая спросит номер документа и выведет имя человека, которому он принадлежит;
+    l – (list) – команда, которая выведет список всех документов в формате passport "2207 876234" "Василий Гупкин";
+    s – (shelf) – команда, которая спросит номер документа и выведет номер полки, на которой он находится;
+    a – (add) – команда, которая добавит новый документ в каталог и в перечень полок, спросив его номер, тип,
+    имя владельца и номер полки, на котором он будет храниться.
+    d – (delete) – команда, которая спросит номер документа и удалит его из каталога и из перечня полок;
+    m – (move) – команда, которая спросит номер документа и целевую полку и переместит его с текущей полки на целевую;
+    as – (add shelf) – команда, которая спросит номер новой полки и добавит ее в перечень;
+    """
+    print(
+        'Вас приветствует программа помошник!\n',
+        '(Введите help, для просмотра списка поддерживаемых команд)\n'
+    )
+    user_command = input('Введите команду - ')
+    if user_command == 'p':
+        user_doc_number = input('Введите номер документа - ')
+        owner_name = get_doc_owner_name(user_doc_number)
+        print('Владелец документа - {}'.format(owner_name))
+    elif user_command == 'ap':
+        uniq_users = get_all_doc_owners_names(documents)
+        print('Список владельцев документов - {}'.format(uniq_users))
+    elif user_command == 'l':
+        print("Список всех документов:\n", show_all_docs_info(documents), sep='')
+    elif user_command == 's':
+        user_doc_number = input('Введите номер документа - ')
+        directory_number = get_doc_shelf(user_doc_number)
+        print('Документ находится на полке номер {}'.format(directory_number))
+    elif user_command == 'a':
+        print('Добавление нового документа:')
+        new_doc_number = input('Введите номер документа - ')
+        new_doc_type = input('Введите тип документа - ')
+        new_doc_owner_name = input('Введите имя владельца документа- ')
+        new_doc_shelf_number = input('Введите номер полки для хранения - ')
+        new_doc_shelf_number = add_new_doc(new_doc_number, new_doc_type, new_doc_owner_name, new_doc_shelf_number)
+        print('\nНа полку "{}" добавлен новый документ:'.format(new_doc_shelf_number))
+    elif user_command == 'd':
+        user_doc_number = input('Введите номер документа - ')
+        doc_number, deleted = delete_doc(user_doc_number)
+        if deleted:
+            print('Документ с номером "{}" был успешно удален'.format(doc_number))
+    elif user_command == 'm':
+        user_doc_number = input('Введите номер документа - ')
+        user_shelf_number = input('Введите номер полки для перемещения - ')
+        print(move_doc_to_shelf(user_doc_number, user_shelf_number))
+    elif user_command == 'as':
+        shelf_number = input('Введите номер полки - ')
+        shelf_number, added = add_new_shelf(shelf_number)
+        if added:
+            print('Добавлена полка "{}"'.format(shelf_number))
+    elif user_command == 'help':
+        print(secretary_program_start.__doc__)
 
 
 # Задание №2
 
+def put_folder(folder_name, token):
+    files_url = 'https://cloud-api.yandex.net/v1/disk/resources'
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'OAuth {}'.format(token)
+    }
+    params = {"path": folder_name}
+    response = requests.put(files_url, params=params, headers=headers)
+    return response.status_code
 
-class YandexDisk:
+def del_folder(folder_name, token):
+    files_url = 'https://cloud-api.yandex.net/v1/disk/resources'
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'OAuth {}'.format(token)
+    }
+    params = {"path": folder_name}
+    response = requests.delete(files_url, params=params, headers=headers)
+    return response.status_code
 
-    def __init__(self, token):
-        self.token = token
-
-    def get_headers(self):
-        return {
-            'Content-Type': 'application/json',
-            'Authorization': 'OAuth {}'.format(self.token)
-        }
-
-    def put_folder(self, folder_name):
-        files_url = 'https://cloud-api.yandex.net/v1/disk/resources'
-        headers = self.get_headers()
-        params = {"path": folder_name}
-        response = requests.put(files_url, params=params, headers=headers)
-        # print('Папка создана')
-        return response.status_code
-
-    # def _get_upload_link(self, disk_file_path):
-    #     upload_url = "https://cloud-api.yandex.net/v1/disk/resources/upload"
-    #     headers = self.get_headers()
-    #     params = {"path": disk_file_path, "overwrite": "true"}
-    #     response = requests.get(upload_url, headers=headers, params=params)
-    #     return response.json()
-
-    # def upload_data_to_disk(self, disk_file_path, filename):
-    #     href = self._get_upload_link(disk_file_path=disk_file_path).get("href", "")
-    #     response = requests.put(href, data=filename)
-
-    # def upload_file_to_link(self, disk_file_path, url):
-    #     href = self._get_upload_link(disk_file_path=disk_file_path).get("href", "")
-    #     response = requests.put(href, data=url)
-    #     print(f"Файл {keys} загружен")
 
 
 if __name__ == '__main__':
-    # TOKEN = "AQAAAAAJ2UEnAADLW_g9FsGOjUm9koH-YGtzlMs"
+    print('Задание №1')
+    secretary_program_start()
+    print('Задание №2')
     TOKEN = input("Введите токен Яндекс.Диск: ")
-    # user_id = '17331357'
-    check = yadisk.YaDisk(token=TOKEN)
-    # Проверяет, валиден ли токен
+    check = yadisk.YaDisk(token=TOKEN) # Проверяет, валиден ли токен
     if check.check_token() == True:
         folder = input("Введите имя папки для сохранения фотографий: ")
-        ya = YandexDisk(TOKEN)
-        print(ya.put_folder(folder_name=folder))
-        # ya.upload_data_to_disk(f"{folder}/data_foto.json", list_data_foto)
-        # for keys, values in dictionary_foto.items():
-        #     ya.upload_file_to_link(disk_file_path=f"{folder}/{keys}", url=values)
     else:
         print("Некорректный токен!")
